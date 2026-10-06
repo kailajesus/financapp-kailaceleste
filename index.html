@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10291f" />
+    <link rel="manifest" href="manifest.json" />
+    <title>FinancApp — Controle financeiro</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #182b22;
+        background: #f5f7f4;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --green: #17764d;
+        --green-dark: #10291f;
+        --muted: #77857d;
+        --line: #e7ebe7;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at 12% 0%, #e5f1e8 0, transparent 34rem),
+          #f5f7f4;
+      }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      .page { width: min(100% - 48px, 1100px); margin: 0 auto; padding: 30px 0 64px; }
+      .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 34px; }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        border: 1px solid #ffffff55;
+        border-radius: 15px;
+        color: white;
+        background: linear-gradient(145deg, #23a56b, #12613f);
+        box-shadow: 0 8px 18px #17764d2c;
+        font-size: 23px;
+        font-weight: 850;
+      }
+      .brand h1 { margin: 0; font-size: 22px; letter-spacing: -0.05em; }
+      .brand p { margin: 3px 0 0; color: #79867f; font-size: 12px; }
+      .panel {
+        border: 1px solid #e8ece8;
+        border-radius: 22px;
+        background: #ffffffed;
+        box-shadow: 0 20px 55px #1b35240a, 0 2px 8px #1b352408;
+      }
+      .auth-panel { width: min(100%, 450px); margin: 7vh auto 0; padding: 34px; }
+      .auth-panel h2, .section-title { margin: 0; font-size: 22px; letter-spacing: -0.04em; }
+      .muted { color: var(--muted); }
+      .auth-panel > p { margin: 9px 0 25px; font-size: 14px; line-height: 1.6; }
+      .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 22px; padding: 5px; border-radius: 13px; background: #f2f5f2; }
+      .tab { min-height: 40px; border: 0; border-radius: 9px; padding: 9px; color: #718078; background: transparent; font-size: 13px; font-weight: 700; transition: color .18s, background .18s, box-shadow .18s; }
+      .tab[aria-selected="true"] { color: var(--green); background: white; box-shadow: 0 2px 8px #1b35240d; }
+      .field { display: grid; gap: 8px; margin-bottom: 17px; }
+      .field label { color: #39483f; font-size: 12px; font-weight: 700; }
+      input, select {
+        width: 100%;
+        min-height: 47px;
+        border: 1px solid #dfe6e0;
+        border-radius: 12px;
+        padding: 11px 13px;
+        color: #182b22;
+        background: #fff;
+        outline: none;
+        transition: border-color .16s, box-shadow .16s;
+      }
+      input::placeholder { color: #a3ada6; }
+      input:focus, select:focus { border-color: #43a878; box-shadow: 0 0 0 4px #43a8781c; }
+      .button {
+        min-height: 46px;
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 17px;
+        color: white;
+        background: linear-gradient(135deg, #208452, #176b45);
+        box-shadow: 0 6px 14px #17764d20;
+        font-size: 13px;
+        font-weight: 750;
+        transition: transform .16s, box-shadow .16s, filter .16s;
+      }
+      .button:hover { transform: translateY(-1px); box-shadow: 0 9px 18px #17764d2b; filter: saturate(1.08); }
+      .button:active { transform: translateY(0); }
+      .button:disabled { cursor: wait; opacity: .65; transform: none; }
+      .button.full { width: 100%; }
+      .button.secondary { color: #315e46; background: #eaf2eb; box-shadow: none; }
+      .button.secondary:hover { background: #deebdf; box-shadow: 0 5px 14px #203e2810; }
+      .button.danger { color: #a5473c; background: #fbefed; box-shadow: none; }
+      .button.danger:hover { background: #f7e3e0; box-shadow: 0 5px 14px #6e2a2010; }
+      .notice { min-height: 18px; margin: 13px 0 0; color: #ad4138; font-size: 13px; line-height: 1.45; }
+      .notice:empty { display: none; }
+      .notice.success { color: #17764d; }
+      .test-warning { margin-top: 18px; padding: 12px 14px; border: 1px solid #f0dfbd; border-radius: 12px; color: #775d2e; background: #fff9eb; font-size: 11px; line-height: 1.55; }
+      .topline { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 5px 0 26px; }
+      .topline h2 { font-size: clamp(25px, 4vw, 32px); }
+      .topline p { margin: 6px 0 0 !important; font-size: 14px; }
+      .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: 22px; align-items: start; }
+      .balance-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 175px;
+        padding: 26px 28px;
+        border: 1px solid #ffffff20;
+        border-radius: 22px;
+        color: white;
+        background:
+          radial-gradient(circle at 88% 6%, #ffffff20 0 2px, transparent 3px),
+          radial-gradient(ellipse at 100% 0%, #279a684a, transparent 19rem),
+          linear-gradient(125deg, #163d2b, #0f2a20 72%);
+        box-shadow: 0 18px 38px #10291f22;
+      }
+      .balance-card::after {
+        position: absolute;
+        right: -45px;
+        bottom: -95px;
+        width: 250px;
+        height: 250px;
+        border: 1px solid #ffffff15;
+        border-radius: 50%;
+        box-shadow: 0 0 0 22px #ffffff08, 0 0 0 46px #ffffff06;
+        content: "";
+      }
+      .balance-card p { position: relative; z-index: 1; margin: 0 0 17px; color: #c1d4c8; font-size: 13px; font-weight: 550; }
+      .balance-card strong { position: relative; z-index: 1; font-size: clamp(32px, 6vw, 44px); letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+      .content-panel { margin-top: 20px; padding: 24px; }
+      .content-panel .section-title { margin-bottom: 20px; font-size: 18px; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 13px; }
+      .form-grid .wide { grid-column: 1 / -1; }
+      .transactions { display: grid; gap: 10px; }
+      .empty { padding: 30px 12px; color: #89958e; text-align: center; font-size: 13px; line-height: 1.5; }
+      .transaction { padding: 16px; border: 1px solid #e9ede9; border-radius: 15px; background: #fff; transition: border-color .18s, transform .18s, box-shadow .18s; }
+      .transaction:hover { transform: translateY(-1px); border-color: #d9e6dc; box-shadow: 0 8px 20px #1b35240a; }
+      .transaction-main { display: flex; justify-content: space-between; gap: 16px; }
+      .transaction-name { min-width: 0; color: #27392f; font-size: 13px; font-weight: 720; overflow-wrap: anywhere; }
+      .transaction-date { margin-top: 5px; color: #98a29c; font-size: 11px; }
+      .amount { flex: 0 0 auto; font-size: 13px; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .amount.income { color: #168451; }
+      .amount.expense { color: #c45f50; }
+      .transaction-actions { display: flex; justify-content: flex-end; margin-top: 9px; }
+      .transaction-actions { gap: 7px; }
+      .transaction-actions .button { min-height: 32px; padding: 6px 11px; border-radius: 9px; font-size: 11px; }
+      .report-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
+      .report-heading .section-title { margin: 0; }
+      .report-tools { display: flex; align-items: center; gap: 8px; }
+      .report-month { width: auto; min-height: 37px; padding: 6px 9px; border-radius: 9px; font-size: 12px; }
+      .report-print-button { min-height: 37px; padding: 7px 10px; border-radius: 9px; font-size: 11px; }
+      .report-print-header { display: none; }
+      .report-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 13px; }
+      .report-metric { display: grid; gap: 5px; padding: 12px; border: 1px solid #edf0ed; border-radius: 12px; background: #fbfcfb; }
+      .report-metric span { color: #89958e; font-size: 10px; }
+      .report-total, .report-income, .report-net { color: #b55446; font-size: clamp(15px, 2.6vw, 21px); font-weight: 780; letter-spacing: -0.045em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      .report-income { color: #168451; }
+      .report-net { color: #315e46; }
+      .report-net.negative { color: #b55446; }
+      .report-count { color: #8b9890; font-size: 11px; text-align: right; }
+      .report-list { display: grid; gap: 2px; max-height: 260px; overflow-y: auto; }
+      .report-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid #edf0ed; }
+      .report-item > div { display: grid; gap: 3px; min-width: 0; }
+      .report-item strong { overflow-wrap: anywhere; color: #3d4c43; font-size: 11px; }
+      .report-item span { color: #98a29c; font-size: 10px; }
+      .report-item .report-amount { flex: 0 0 auto; color: #435349; font-size: 11px; font-variant-numeric: tabular-nums; }
+      .report-item .report-amount.income { color: #168451; }
+      .report-item .report-amount.expense { color: #b55446; }
+      .report-empty { padding: 16px 8px; }
+      .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      .edit-transaction-form { margin-top: 13px; padding: 12px; border: 1px solid #e5ece6; border-radius: 12px; background: #f8faf8; }
+      .edit-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, .55fr) minmax(100px, .55fr); gap: 8px; }
+      .edit-fields input, .edit-fields select { min-height: 38px; padding: 7px 9px; border-radius: 9px; font-size: 12px; }
+      .edit-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 9px; }
+      .edit-actions .button { min-height: 33px; padding: 6px 11px; border-radius: 9px; font-size: 11px; }
+      .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+      .tag { padding: 5px 9px; border: 1px solid #e0eee3; border-radius: 999px; color: #32734e; background: #f1f8f2; font-size: 10px; font-weight: 650; }
+      .tag-form { display: flex; gap: 8px; margin-top: 12px; }
+      .tag-form input { min-height: 36px; padding: 7px 10px; border-radius: 9px; font-size: 12px; }
+      .tag-form button { flex: 0 0 auto; min-height: 36px; padding: 6px 10px; border-radius: 9px; font-size: 11px; }
+      [hidden] { display: none !important; }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      }
+      @media (max-width: 720px) {
+        .page { width: min(100% - 28px, 560px); padding-top: 22px; }
+        .brand { margin-bottom: 25px; }
+        .dashboard-grid { grid-template-columns: 1fr; gap: 14px; }
+        .content-panel { margin-top: 14px; padding: 19px; }
+        .auth-panel { margin-top: 4vh; padding: 25px; }
+        .topline { align-items: center; margin-bottom: 18px; }
+        .topline .button { min-height: 39px; padding: 8px 12px; }
+        .balance-card { min-height: 158px; padding: 23px; }
+      }
+      @media (max-width: 390px) {
+        .page { width: min(100% - 22px, 360px); }
+        .form-grid { grid-template-columns: 1fr; }
+        .form-grid .wide { grid-column: auto; }
+        .auth-panel { padding: 21px; }
+        .content-panel { padding: 16px; }
+        .transaction { padding: 13px; }
+        .edit-fields { grid-template-columns: 1fr 1fr; }
+        .edit-fields input:first-child { grid-column: 1 / -1; }
+        .report-summary { grid-template-columns: 1fr; }
+      }
+      @media print {
+        @page { size: auto; margin: 16mm; }
+        body * { visibility: hidden !important; }
+        .monthly-report, .monthly-report * { visibility: visible !important; }
+        .monthly-report {
+          position: absolute;
+          inset: 0 auto auto 0;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          color: #111;
+          background: white;
+        }
+        .report-print-header { display: block; margin-bottom: 22px; }
+        .report-print-header h1 { margin: 0 0 5px; font-size: 22px; }
+        .report-print-header p { margin: 3px 0; color: #555; font-size: 11px; }
+        .report-tools, #print-report-button { display: none !important; }
+        .report-heading { display: block; margin-bottom: 14px; }
+        .report-heading .section-title { font-size: 17px; }
+        .report-summary { grid-template-columns: repeat(3, 1fr); margin-bottom: 18px; }
+        .report-metric { padding: 11px; border-color: #ddd; background: white; }
+        .report-list { max-height: none; overflow: visible; }
+        .report-item { break-inside: avoid; border-color: #ddd; }
+        .report-item strong, .report-item span, .report-count { color: #222; }
+        .report-total, .report-income, .report-net,
+        .report-item .report-amount.income, .report-item .report-amount.expense { color: #111; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="brand">
+        <div class="brand-mark" aria-hidden="true">F</div>
+        <div>
+          <h1>FinancApp</h1>
+          <p>Seu dinheiro, organizado.</p>
+        </div>
+      </header>
+
+      <section id="auth-view" class="panel auth-panel" aria-labelledby="auth-title">
+        <h2 id="auth-title">Acesse sua conta</h2>
+        <p class="muted">Entre ou crie sua conta para salvar seus lançamentos no banco de dados.</p>
+        <div class="tabs" role="tablist" aria-label="Acesso">
+          <button class="tab" id="login-tab" type="button" role="tab" aria-selected="true">Entrar</button>
+          <button class="tab" id="register-tab" type="button" role="tab" aria-selected="false">Criar conta</button>
+        </div>
+        <form id="login-form">
+          <div class="field">
+            <label for="login-username">Usuário</label>
+            <input id="login-username" name="usuario" autocomplete="username" required />
+          </div>
+          <div class="field">
+            <label for="login-password">Senha</label>
+            <input id="login-password" name="senha" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="button full" type="submit">Entrar</button>
+        </form>
+        <form id="register-form" hidden>
+          <div class="field">
+            <label for="register-name">Nome</label>
+            <input id="register-name" name="nome" autocomplete="name" required />
+          </div>
+          <div class="field">
+            <label for="register-class">Turma</label>
+            <input id="register-class" name="turma" autocomplete="organization-title" required />
+          </div>
+          <div class="field">
+            <label for="register-username">Usuário</label>
+            <input id="register-username" name="usuario" autocomplete="username" required />
+          </div>
+          <div class="field">
+            <label for="register-password">Senha</label>
+            <input id="register-password" name="senha" type="password" autocomplete="new-password" required />
+          </div>
+          <button class="button full" type="submit">Criar conta</button>
+        </form>
+        <aside class="test-warning" aria-label="Aviso do modo de teste">
+          Modo de teste sem Supabase Auth: use apenas dados e senhas fictícios. O acesso anônimo ao banco não é seguro para produção.
+        </aside>
+        <p id="auth-message" class="notice" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="dashboard-view" hidden aria-label="Painel financeiro">
+        <div class="topline">
+          <div>
+            <h2 id="welcome-title" class="section-title">Olá!</h2>
+            <p class="muted" style="margin: 5px 0 0">Aqui está seu resumo financeiro.</p>
+          </div>
+          <button id="logout-button" class="button secondary" type="button">Sair</button>
+        </div>
+
+        <div class="dashboard-grid">
+          <div>
+            <section class="balance-card" aria-live="polite">
+              <p>Saldo atual</p>
+              <strong id="balance-value">R$ 0,00</strong>
+            </section>
+            <section class="panel content-panel monthly-report" aria-labelledby="report-title">
+              <header class="report-print-header">
+                <h1>FinancApp</h1>
+                <p>Relatório financeiro mensal</p>
+                <p id="report-print-user"></p>
+                <p id="report-print-period"></p>
+              </header>
+              <div class="report-heading">
+                <h2 id="report-title" class="section-title">Gastos do mês</h2>
+                <div class="report-tools">
+                  <label>
+                    <span class="visually-hidden">Mês do relatório</span>
+                    <input id="report-month" class="report-month" type="month" aria-label="Mês do relatório" />
+                  </label>
+                  <button id="print-report-button" class="button secondary report-print-button" type="button">Imprimir</button>
+                </div>
+              </div>
+              <div class="report-summary">
+                <div class="report-metric">
+                  <span>Total de despesas</span>
+                  <strong id="report-total" class="report-total">R$ 0,00</strong>
+                </div>
+                <div class="report-metric">
+                  <span>Total de receitas</span>
+                  <strong id="report-income" class="report-income">R$ 0,00</strong>
+                </div>
+                <div class="report-metric">
+                  <span>Resultado do mês</span>
+                  <strong id="report-net" class="report-net">R$ 0,00</strong>
+                </div>
+              </div>
+              <p id="report-count" class="report-count"></p>
+              <div id="report-list" class="report-list" aria-live="polite"></div>
+            </section>
+            <section class="panel content-panel">
+              <h2 class="section-title">Extrato</h2>
+              <div id="transactions-list" class="transactions" aria-live="polite"></div>
+            </section>
+          </div>
+
+          <section class="panel content-panel">
+            <h2 class="section-title">Novo lançamento</h2>
+            <form id="transaction-form">
+              <div class="form-grid">
+                <div class="field wide">
+                  <label for="transaction-description">Descrição</label>
+                  <input id="transaction-description" name="descricao" maxlength="100" placeholder="Ex.: compra no mercado" required />
+                </div>
+                <div class="field">
+                  <label for="transaction-amount">Valor (R$)</label>
+                  <input id="transaction-amount" name="valor" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00" required />
+                </div>
+                <div class="field">
+                  <label for="transaction-type">Tipo</label>
+                  <select id="transaction-type" name="tipo" required>
+                    <option value="despesa">Despesa</option>
+                    <option value="receita">Receita</option>
+                  </select>
+                </div>
+              </div>
+              <button class="button full" type="submit">Salvar lançamento</button>
+            </form>
+            <p id="transaction-message" class="notice" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

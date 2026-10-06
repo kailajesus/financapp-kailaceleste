@@ -1,0 +1,181 @@
+document.getElementById('formCadastro').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const nome = document.getElementById('cadNome').value.trim();
+    const turma = document.getElementById('cadTurma').value.trim();
+    const usuario = document.getElementById('cadUsuario').value.trim();
+    const senha = document.getElementById('cadSenha').value;
+    const msg = document.getElementById('cadMsg');
+
+    if (!nome || !turma || !usuario || !senha) {
+        msg.textContent = 'Preencha todos os campos.';
+        return;
+    }
+
+    const resultado = await cadastrarUsuario(nome, turma, usuario, senha);
+    if (resultado.error) {
+        msg.textContent = 'Erro ao cadastrar. Tente outro nome de usuário.';
+        return;
+    }
+
+    msg.textContent = 'Conta criada! Faça login abaixo.';
+    e.target.reset();
+});
+
+let usuarioLogado = null;
+
+document.getElementById('formLogin').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const usuario = document.getElementById('loginUsuario').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const msg = document.getElementById('loginMsg');
+
+  const resultado = await fazerLogin(usuario, senha);
+  if (resultado.error) {
+    msg.textContent = 'Usuário ou senha incorretos.';
+    return;
+  }
+
+  usuarioLogado = resultado.data;
+  sessionStorage.setItem('financapp_usuario', JSON.stringify(usuarioLogado));
+
+  document.getElementById('telaAuth').hidden = true;
+  document.getElementById('telaApp').hidden = false;
+  document.getElementById('btnSair').hidden = false;
+
+  mostrarPerfil(usuarioLogado);
+  atualizarExtrato();
+});
+
+function mostrarPerfil(usuario) {
+  document.getElementById('perfilNome').textContent = usuario.nome;
+  document.getElementById('perfilTurma').textContent = usuario.turma;
+  if (usuario.foto_url) {
+    document.getElementById('perfilFoto').src = usuario.foto_url;
+  }
+}
+
+document.getElementById('btnSair').addEventListener('click', function () {
+    usuarioLogado = null;
+    sessionStorage.removeItem('financapp_usuario');
+    document.getElementById('telaApp').hidden = true;
+    document.getElementById('telaAuth').hidden = false;
+    document.getElementById('btnSair').hidden = true;
+});
+
+const usuarioSalvo = sessionStorage.getItem('financapp_usuario');
+if (usuarioSalvo) {
+    usuarioLogado = JSON.parse(usuarioSalvo);
+    document.getElementById('telaAuth').hidden = true;
+    document.getElementById('telaApp').hidden = false;
+    document.getElementById('btnSair').hidden = false;
+    mostrarPerfil(usuarioLogado);
+    atualizarExtrato();
+}
+async function atualizarExtrato() {
+    const resultado = await carregarLancamentos(usuarioLogado.id);
+
+    const extratoContainer = document.getElementById('extratoContainer');
+    extratoContainer.innerHTML = '';
+
+    if (resultado.error) {
+        extratoContainer.textContent = 'Erro ao carregar o extrato.';
+        return;
+    }
+
+    let saldo = 0;
+
+    resultado.data.forEach(function (lancamento) {
+        extratoContainer.appendChild(renderLancamento(lancamento));
+
+        if (lancamento.tipo === 'receita') {
+            saldo += Number(lancamento.valor);
+        } else {
+            saldo -= Number(lancamento.valor);
+        }
+    });
+
+    const saldoValor = document.getElementById('saldoValor');
+
+    saldoValor.textContent = saldo.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+
+    saldoValor.classList.toggle('positivo', saldo >= 0);
+    saldoValor.classList.toggle('negativo', saldo < 0);
+}
+
+function renderLancamento(lancamento) {
+    const card = document.createElement('div');
+    card.className = 'lancamento-card';
+
+    const descricao = document.createElement('p');
+    descricao.className = 'lancamento-desc';
+    descricao.textContent = lancamento.descricao;
+
+    const data = document.createElement('span');
+    data.className = 'lancamento-data';
+    data.textContent = new Date(lancamento.criado_em)
+        .toLocaleDateString('pt-BR');
+
+    const valor = document.createElement('span');
+    valor.className = 'lancamento-valor ' +
+        (lancamento.tipo === 'receita' ? 'receita' : 'despesa');
+
+    const sinal = lancamento.tipo === 'receita' ? '+' : '-';
+
+    valor.textContent = sinal + Number(lancamento.valor)
+        .toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
+
+    const tagsDiv = document.createElement('div');
+    tagsDiv.className = 'lancamento-tags';
+
+    (lancamento.tags || []).forEach(function (tag) {
+        const badge = document.createElement('span');
+        badge.className = 'tag-badge';
+        badge.textContent = tag;
+        tagsDiv.appendChild(badge);
+    });
+
+    card.appendChild(descricao);
+    card.appendChild(data);
+    card.appendChild(valor);
+    card.appendChild(tagsDiv);
+
+    return card;
+}
+
+document.getElementById('formLancamento').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const descricao = document.getElementById('lancDescricao').value.trim();
+  const valor = document.getElementById('lancValor').value;
+  const tipo = document.getElementById('lancTipo').value;
+  const tagsTexto = document.getElementById('lancTags').value;
+
+  if (!descricao || !valor) {
+    return;
+  }
+
+  const resultado = await criarLancamento(usuarioLogado.id, descricao, valor, tipo);
+  if (resultado.error) {
+    return;
+  }
+
+  const tags = tagsTexto.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  for (const tag of tags) {
+    await adicionarTag(resultado.data.id, tag);
+  }
+
+  e.target.reset();
+  atualizarExtrato();
+});
+
+<link rel="manifest" href="manifest.json">
+
+
